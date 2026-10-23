@@ -76,6 +76,26 @@ Time and scheduling
 The GUI can append a third ``time_base`` section for per-process schedules.
 Legacy and Hybrid read those schedules; Pure does not use this section.
 
+Equilibrium preparation
+-----------------------
+
+``extend_equilibrium``
+   Optional, ``0`` (default, also when absent) or ``1``. ``1`` extends psi and
+   B outside the LCFS and the ``profiles_2d`` grid of the input equilibrium
+   with ``workflow/extend_equilibrium.py`` (matched scheme), for
+   fixed-boundary equilibria whose psi is clamped outside the LCFS or whose
+   grid stops close to the plasma. It runs in the equilibrium fix-ups of
+   ``workflow/ids_prep.py``, after the completion of ``b_field_r/z/phi`` and
+   before the NaN replacement, in the process that reads the input database
+   (Legacy, Hybrid macro, Pure). The result is not a reconstructed
+   equilibrium outside the LCFS; the caveat is appended to
+   ``ids_properties.comment``.
+
+``extend_equilibrium_box``
+   Optional ``Rmin,Rmax,Zmin,Zmax`` in m, covered by the extended grid; when
+   absent, the default box of ``extend_equilibrium.py`` (ITER EC launchers,
+   ``3.9,10.6,-4.6,4.9``).
+
 Actor selection
 ---------------
 
