@@ -20,7 +20,7 @@ import hcd_ec as hcd  # noqa: E402
 # Version label = build date of the module; built from COMMIT (origin/feature/DD3_and_DD4,
 # git describe DESCRIBE). The modified configuration files of the clone (input/input_chease.xml,
 # input/scenario.yaml, env files) are not part of it.
-VERSION = hcd.VERSION
+VERSION = hcd.version_of('RISK')
 COMMIT = '34e56cac760a990eba9f23a8e9612ac9f300ad4b'
 DESCRIBE = '2.2.0-12-g34e56ca'
 REPO = hcd.repo('risk', 'RISK')

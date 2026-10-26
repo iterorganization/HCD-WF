@@ -52,7 +52,7 @@ SITE_MODULES=/work/imas/etc/modules/all
 EB_MODULE=EasyBuild/5.4.1
 export HCD_MODULES_WORK=$BASE
 
-# date label of the modules: VERSION of the generator library
+# date label of the modules: VERSION of the generator library (per-code labels below)
 VERSION=$(sed -n "s/^VERSION = '\([^']*\)'.*/\1/p" "$EC_ROOT/_lib/hcd_ec.py")
 [[ -n "$VERSION" ]] || { echo "no VERSION in $EC_ROOT/_lib/hcd_ec.py" >&2; exit 2; }
 
@@ -61,6 +61,15 @@ VERSION=$(sed -n "s/^VERSION = '\([^']*\)'.*/\1/p" "$EC_ROOT/_lib/hcd_ec.py")
 CODE_ORDER=(TORBEAM GRAY GRAYSCALE TORAY GENRAY RELAX FPSIM CYRANO TOMCAT LION PION TORIC StixReDist FoPla NEMO NBISIM FUSREAC SPECE HCD2CORE_SOURCES HCD_MERGERS HCD2CORE_PROFILES LHCD-MODULE CHEASE RABBIT RISK SPOT ASCOT)
 declare -A CODE_EC=()
 for c in "${CODE_ORDER[@]}"; do CODE_EC[$c]=$c/$c-$VERSION; done
+# per-code date labels (VERSION_OVERRIDES of the generator library)
+overrides=$(python3 -c 'import sys; sys.path.insert(0, sys.argv[1]); import hcd_ec
+for c, v in sorted(hcd_ec.VERSION_OVERRIDES.items()): print(c, v)' "$EC_ROOT/_lib") \
+    || { echo "cannot read VERSION_OVERRIDES of $EC_ROOT/_lib/hcd_ec.py" >&2; exit 2; }
+while read -r c v; do
+    [[ -n "$c" ]] || continue
+    [[ -n "${CODE_EC[$c]:-}" ]] || { echo "VERSION_OVERRIDES: unknown code $c" >&2; exit 2; }
+    CODE_EC[$c]=$c/$c-$v
+done <<< "$overrides"
 # Extra sbatch options per code (override the #SBATCH lines of build_modules.sbatch): MPI tests
 # (up to 4 MPI processes plus the workflow / manager processes) and the long ASCOT build
 declare -A CODE_SBATCH=(

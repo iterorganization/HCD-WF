@@ -24,7 +24,7 @@ import hcd_ec as hcd  # noqa: E402
 
 # Version label = build date of the module; built from COMMIT (origin/feature/DD3_and_DD4,
 # git describe DESCRIBE).
-VERSION = hcd.VERSION
+VERSION = hcd.version_of('ASCOT')
 COMMIT = '8ca35d327eca3d2591ef54b9d82cc0bbe61db8f1'
 DESCRIBE = '4.8.2-34-g8ca35d32'
 REPO = hcd.repo('ascot', 'ASCOT')

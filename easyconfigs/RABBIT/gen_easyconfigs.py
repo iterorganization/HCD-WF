@@ -18,7 +18,7 @@ import hcd_ec as hcd  # noqa: E402
 
 # Version label = build date of the module; built from COMMIT (origin/feature/DD3_and_DD4,
 # git describe DESCRIBE).
-VERSION = hcd.VERSION
+VERSION = hcd.version_of('RABBIT')
 COMMIT = '5d5097c0964b6b1ca1b94cbca6a0de0624c09c6e'
 DESCRIBE = '5.0.2-159-g5d5097c'
 REPO = hcd.repo('rabbit', 'RABBIT')

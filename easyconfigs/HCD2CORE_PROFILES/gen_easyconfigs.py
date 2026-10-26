@@ -17,7 +17,7 @@ import hcd_ec as hcd  # noqa: E402
 
 # Version label = build date of the module; built from COMMIT (origin/feature/DD3_and_DD4,
 # git describe DESCRIBE). The staged .gitignore and env-file edits of the clone are not part of it.
-VERSION = hcd.VERSION
+VERSION = hcd.version_of('HCD2CORE_PROFILES')
 COMMIT = '024c36eb1dd9049b2bd5708d236b9f0631160e5f'
 DESCRIBE = '1.1.0-8-g024c36e'
 REPO = hcd.repo('hcd2core-profiles', 'HCD2CORE_PROFILES')

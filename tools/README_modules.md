@@ -51,7 +51,8 @@ easyconfigs too.
 ## Naming and install tree
 
 - Module name: `<CODE>/<date>-intel-<tc>-DD-<dd>`, e.g. `TORBEAM/2026.10.22-intel-2025b-DD-4.1.1`.
-  The version is a date label (`VERSION` in `easyconfigs/_lib/hcd_ec.py`); the commit it is built from
+  The version is a date label (`VERSION` in `easyconfigs/_lib/hcd_ec.py`, or the code's entry in
+  `VERSION_OVERRIDES` there, see "Rebuilding one code from a newer commit"); the commit it is built from
   and its `git describe` are in the module help (`module help`, `description` of the easyconfig) and in
   `local_commit` of the easyconfig. The date label keeps the names apart from the official site modules,
   whose versions are release numbers (e.g. `TORBEAM/3.8.0-intel-2023b-DD-3.42.0`).
@@ -188,6 +189,25 @@ build. The module sets `IMAS_VERSION`, `COMBO` and `<NAME>_RUN_KIT` and raises t
    easyconfigs/*/*-<old>-intel-*.eb`) and the old lines of `sources.sha256`, unless both labels are kept.
 3. Dry run, `--submit all`. The new modules install next to the old ones (other version), so users switch
    by module name.
+
+## Rebuilding one code from a newer commit
+
+A module name stands for one build: a code rebuilt from a newer commit gets its own date label, the
+other codes keep theirs.
+
+1. Add the code to `VERSION_OVERRIDES` in `easyconfigs/_lib/hcd_ec.py` (`'<CODE>': '<date>'`, `<CODE>`
+   as in `CODE_ORDER` of `build_hcd_modules.sh`). The writers, the template generators (`VERSION =
+   hcd.version_of('<CODE>')`) and `build_hcd_modules.sh` read the label through it; codes not listed use
+   `VERSION`.
+2. Set the new `commit` / `describe` (or `COMMIT` / `DESCRIBE`) in the code's generator, run it: it
+   writes the three `.eb` files under the new label, the archive `<code>-<date>.tar.gz` and its line in
+   `sources.sha256`. The `.eb` files and the archive line of the old label stay (the old modules stay
+   installed until removed by hand).
+3. Run the other generators too and check that `git status easyconfigs/` shows no other generated file
+   changed.
+4. `--make-sources <CODE>`, `--dry-run <CODE> all`, `--submit <CODE> all`.
+
+Current overrides: FoPla `2026.10.26`.
 
 ## Replacing an older set of modules
 

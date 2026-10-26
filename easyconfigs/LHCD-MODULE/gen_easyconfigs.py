@@ -22,7 +22,7 @@ import hcd_ec as hcd  # noqa: E402
 
 # Version label = build date of the module; built from COMMIT (origin/feature/DD3_and_DD4,
 # git describe DESCRIBE).
-VERSION = hcd.VERSION
+VERSION = hcd.version_of('LHCD-MODULE')
 COMMIT = '55a445eae49036c7f0eaeac5cbc0b1926df6fe9a'
 DESCRIBE = 'v2_dd3&4_al5_JINTRACv36-3-g55a445e'
 REPO = hcd.repo('lhcd-module', 'LHCD-MODULE')

@@ -17,7 +17,7 @@ import hcd_ec as hcd  # noqa: E402
 
 # Version label = build date of the module; the commit it is built from is COMMIT
 # (origin/feature/DD3_and_DD4, git describe 3.8.0-182-gc0c8081).
-VERSION = hcd.VERSION
+VERSION = hcd.version_of('TORBEAM')
 COMMIT = '6bac997a7edb00d935f21263ac3eb118ccbf4311'
 DESCRIBE = '3.8.0-183-g6bac997'
 REPO = hcd.repo('torbeam', 'TORBEAM')

@@ -25,7 +25,7 @@ import hcd_ec as hcd  # noqa: E402
 
 # Version label = build date of the module; built from COMMIT (origin/feature/DD3_and_DD4,
 # git describe DESCRIBE).
-VERSION = hcd.VERSION
+VERSION = hcd.version_of('CHEASE')
 COMMIT = '834d4a516b07893d85e64554ae6654082b32096a'
 DESCRIBE = 'crpptbx-9.6.0-deployed-crpptbx-release-v15.1.1-38-g834d4a5'
 REPO = hcd.repo('chease', 'CHEASE')

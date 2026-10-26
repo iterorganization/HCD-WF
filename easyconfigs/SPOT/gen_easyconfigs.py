@@ -20,7 +20,7 @@ import hcd_ec as hcd  # noqa: E402
 # Version label = build date of the module; built from COMMIT (origin/feature/DD3_and_DD4,
 # git describe DESCRIBE). The modified configuration files of the clone (batch_spot_imas,
 # input/*.xml, input/scenario.yaml, env files) are not part of it.
-VERSION = hcd.VERSION
+VERSION = hcd.version_of('SPOT')
 COMMIT = '1ec39ddd8f793cca162b74d621c7777bdb7bffb6'
 DESCRIBE = '2.4.0-15-g1ec39dd'
 REPO = hcd.repo('spot', 'SPOT')

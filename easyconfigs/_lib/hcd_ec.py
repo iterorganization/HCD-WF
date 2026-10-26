@@ -34,6 +34,13 @@ import subprocess
 import sys
 
 VERSION = '2026.10.22'
+# Date label of the codes whose modules are built from a newer pinned commit than the rest: a new
+# commit gets a new label, so that one module name never stands for two builds. Codes not listed
+# use VERSION. Read through version_of(name) by the writers, the template generators and
+# tools/build_hcd_modules.sh.
+VERSION_OVERRIDES = {
+    'FoPla': '2026.10.26',
+}
 SITE_MODULES = '/work/imas/etc/modules/all'
 
 LIB = os.path.dirname(os.path.abspath(__file__))
@@ -81,6 +88,11 @@ def write_file(path, text):
     return sha256_text(text)
 
 
+def version_of(name):
+    """Date label of a code: VERSION_OVERRIDES[name], else VERSION."""
+    return VERSION_OVERRIDES.get(name, VERSION)
+
+
 def git(repo, *args):
     return subprocess.run(['git', '-C', repo] + list(args), check=True, capture_output=True, text=True).stdout
 
@@ -106,7 +118,7 @@ def make_archive(name, repo_dir, commit, prefix):
     """git archive --prefix=<prefix>/ of commit into <work>/sources/<letter>/<name>/<namelower>-<VERSION>.tar.gz,
     written only when missing (read-only on the clone), then checked against sources.sha256 (an archive
     without entry is recorded there)."""
-    rel = os.path.join(name[0].lower(), name, '%s-%s.tar.gz' % (name.lower(), VERSION))
+    rel = os.path.join(name[0].lower(), name, '%s-%s.tar.gz' % (name.lower(), version_of(name)))
     out = os.path.join(SOURCES_ROOT, rel)
     if not os.path.exists(out):
         os.makedirs(os.path.dirname(out), exist_ok=True)
@@ -491,6 +503,7 @@ moduleclass = 'phys'
 def generate(code, here):
     """code: dict describing the code (see a gen_easyconfigs.py); here: folder of the generator."""
     name, actor, cname = code['name'], code['actor'], code['code']
+    version = version_of(name)
     ebname = re.sub(r'[^A-Z0-9]', 'MIN', name.upper())
     # commit checks (read-only)
     head = git(code['repo'], 'rev-parse', code['commit'] + '^{commit}').strip()
@@ -583,7 +596,7 @@ def generate(code, here):
                  'test "$IMAS_VERSION" = "$(pkg-config --modversion al-fortran | cut -d- -f1)"',
                  'bash %%(installdir)s/run_kit/ci-sdcc/build_stamp.sh check %%(installdir)s/run_kit %s' % cname,
                  '%s_run_setup --help' % cname]
-        usage = '\n'.join(['module load %s/%s-intel-%s-DD-%s' % (name, VERSION, fl['tc'], fl['dd']),
+        usage = '\n'.join(['module load %s/%s-intel-%s-DD-%s' % (name, version, fl['tc'], fl['dd']),
                            '%s_run_setup <dir> && cd <dir>' % cname] + code['run_lines'] +
                           list(code.get('usage_notes', [])) +
                           ['HCD-WF layout: ACTOR_FOLDER=$EBROOT%s ($ACTOR_FOLDER/%s/%s_m3.exe; actor package %s on '
@@ -592,7 +605,7 @@ def generate(code, here):
         server_note = code.get('server_note', '')
         s = {
             'NAME': name, 'NAMELOWER': name.lower(), 'TITLE': code['title'], 'DD': fl['dd'], 'TC': fl['tc'],
-            'FC': fc, 'COMBO': combo, 'VERSION': VERSION, 'COMMIT': code['commit'], 'DESCRIBE': describe,
+            'FC': fc, 'COMBO': combo, 'VERSION': version, 'COMMIT': code['commit'], 'DESCRIBE': describe,
             'BRANCH_TEXT': code.get('branch_text', 'origin/feature/DD3_and_DD4'), 'SERVER_NOTE': server_note,
             'GIT_URL': code.get('repo_url') or '%s/%s.git' % (code['git_base'], code['repo_name']),
             'REPO_NAME': code['repo_name'],
@@ -618,7 +631,7 @@ def generate(code, here):
             text = text.replace('@%s@' % k, v)
         left = re.findall(r'@[A-Z_]+@', text)
         assert not left, left
-        write_file(os.path.join(here, '%s-%s-intel-%s-DD-%s.eb' % (name, VERSION, fl['tc'], fl['dd'])), text)
+        write_file(os.path.join(here, '%s-%s-intel-%s-DD-%s.eb' % (name, version, fl['tc'], fl['dd'])), text)
 
 
 # --------------------------------------------------------------------------------------------------
@@ -640,6 +653,7 @@ def easyconfig_spec(code, flavour, helper_sha):
     def s(x):
         return x.format(**sub) if isinstance(x, str) else x
 
+    version = version_of(code['name'])
     env_vars = [('IMAS_VERSION', dd), ('COMBO', flavour)] + list(code.get('env', []))
     kitvar = code['name'].upper().replace('-', '_') + '_RUN_KIT'
     links = [(s(path), actor) for path, actor in fl.get('links', code.get('links', []))]
@@ -653,13 +667,13 @@ def easyconfig_spec(code, flavour, helper_sha):
     a("easyblock = 'MakeCp'")
     a('')
     a('name = %r' % code['name'])
-    a('version = %r' % VERSION)
+    a('version = %r' % version)
     a('local_dd = %r' % dd)
     a("versionsuffix = '-DD-%s' % local_dd")
     a('')
-    a('# Version %s (date label) = commit %s of origin/feature/DD3_and_DD4,' % (VERSION, code['commit']))
+    a('# Version %s (date label) = commit %s of origin/feature/DD3_and_DD4,' % (version, code['commit']))
     a('# %s/%s.git (git describe %s); source archive' % (code['git_url'], code['git_repo'], code['describe']))
-    a('# %s-%s.tar.gz = git archive --prefix=%s/ of that commit.' % (code['name'].lower(), VERSION, code['prefix']))
+    a('# %s-%s.tar.gz = git archive --prefix=%s/ of that commit.' % (code['name'].lower(), version, code['prefix']))
     a('local_commit = %r' % code['commit'])
     a('local_combo = %r' % flavour)
     a('local_fc = %r' % fc)
@@ -667,7 +681,7 @@ def easyconfig_spec(code, flavour, helper_sha):
     a('')
     a('homepage = %r' % code['homepage'])
     a('description = """%s' % code['summary'])
-    a('Version %s is a date label: built from commit %%s (git describe %s) of' % (VERSION, code['describe']))
+    a('Version %s is a date label: built from commit %%s (git describe %s) of' % (version, code['describe']))
     a('origin/feature/DD3_and_DD4, for DD %%s: %s' % code['provides'])
     a('%s <dir> makes a writable run directory from the run kit (run_kit).""" %% (local_commit, local_dd)'
       % code['helper'])
@@ -803,7 +817,7 @@ def write_spec(code, here):
     helper_sha = _spec_helper(code, here)
     for flavour, (tc, dd, fc) in TC_DD_FC.items():
         text = easyconfig_spec(code, flavour, helper_sha)
-        write_file(os.path.join(here, '%s-%s-intel-%s-DD-%s.eb' % (code['name'], VERSION, tc, dd)), text)
+        write_file(os.path.join(here, '%s-%s-intel-%s-DD-%s.eb' % (code['name'], version_of(code['name']), tc, dd)), text)
 
 
 # --------------------------------------------------------------------------------------------------

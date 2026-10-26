@@ -17,7 +17,7 @@ import hcd_ec as hcd  # noqa: E402
 
 # Version label = build date of the module; built from COMMIT (origin/feature/DD3_and_DD4,
 # git describe DESCRIBE).
-VERSION = hcd.VERSION
+VERSION = hcd.version_of('HCD_MERGERS')
 COMMIT = '452f69340d5ed9ced424943510f1b28bc7ddbd01'
 DESCRIBE = '1.0.0-5-g452f693'
 REPO = hcd.repo('hcd-mergers', 'HCD_MERGERS')

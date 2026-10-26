@@ -11,8 +11,8 @@ import hcd_ec as hcd  # noqa: E402
 CODE = dict(
     name='FoPla', code='fopla', helper='fopla_run_setup',
     repo=hcd.repo('fopla', 'FoPla'), prefix='fopla',
-    # origin/feature/DD3_and_DD4, verified 2026-10-22 after git fetch origin
-    commit='15054541d658958bef9079860243c251267ede8d', describe='2.1.0-32-g1505454',
+    # origin/feature/DD3_and_DD4, verified 2026-10-26 after git fetch origin
+    commit='1aa9da05b40b334d2f66abe01c57d3aa1c79ad54', describe='2.1.0-34-g1aa9da0',
     git_url='ssh://git@git.iter.org/heat', git_repo='fopla',
     homepage='https://git.iter.org/projects/HEAT/repos/fopla',
     summary='FoPla: Fokker-Planck solver for ICRF/NBI fast-ion distributions.',
