@@ -13,8 +13,8 @@ Python-based Heating and Current Drive (H&CD) Workflow for ITER plasma simulatio
 | Audience   | Recommended Setup                | Command/Script                        |
 |------------|----------------------------------|---------------------------------------|
 | **User**   | EasyBuild module (SDCC)          | `module load HCD-WF`                  |
-| **User**   | SDCC Helper Script (SDCC)        | `./config_hcd_iter_sdcc.sh`           |
-| **Developer** | SDCC Helper Script (SDCC)     | `./config_hcd_iter_sdcc.sh`           |
+| **User**   | SDCC Helper Script (SDCC)        | `source ./config_hcd_iter_sdcc.sh`    |
+| **Developer** | SDCC Helper Script (SDCC)     | `source ./config_hcd_iter_sdcc.sh`    |
 | **Developer** | Manual Setup (any system)     | See [Developer Setup](#developer-setup) |
 
 ---
@@ -33,10 +33,10 @@ hcd_gui                       # Launch the GUI
 ### 2. On ITER SDCC: Use the Helper Script (Alternative)
 
 ```bash
-./config_hcd_iter_sdcc.sh           # Uses default DD version (3.42.0)
-./config_hcd_iter_sdcc.sh 4.0.0     # Use a different DD version if supported
+source ./config_hcd_iter_sdcc.sh           # Uses default DD version (3.42.0)
+source ./config_hcd_iter_sdcc.sh 4.0.0     # Use a different DD version if supported
 # Optionally set ACTOR_FOLDER for local actors:
-ACTOR_FOLDER=~/public/PYTHON_ACTORS ./config_hcd_iter_sdcc.sh
+ACTOR_FOLDER=~/public/PYTHON_ACTORS source ./config_hcd_iter_sdcc.sh
 ```
 
 This script will:
@@ -67,7 +67,7 @@ hcdslice_nogui -c my_config/
 ### 1. On ITER SDCC: Use the Helper Script (Recommended)
 
 ```bash
-./config_hcd_iter_sdcc.sh
+source ./config_hcd_iter_sdcc.sh
 ```
 - Loads modules, sets up Python venv, installs all dependencies (including dev tools)
 
