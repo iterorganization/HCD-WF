@@ -53,6 +53,15 @@ Global workflow settings:
 * ``version`` - IDS version
 * ``verbose`` - Enable verbose logging (true/false)
 
+Input Entry and DD Version
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The workflow writes its outputs in the DD of its environment (``IMAS_VERSION``) and reads every input
+IDS in its stored DD, converting it to that DD. With DD 4, when the input entry
+(``input_user_or_path``, ``input_database``, ``shot_nr``, ``run_in``) does not exist under the
+version folder 4 (``<database>/4/<pulse>/<run>``), the entry of the same database, pulse and run
+under the version folder 3 is read. The workflow prints the entry it reads.
+
 Actor Configuration
 ~~~~~~~~~~~~~~~~~~~
 
@@ -111,6 +120,76 @@ Configure time loop execution:
 * ``end_time`` - End time (seconds)
 * ``time_step`` - Time step increment
 * ``time_points`` - Explicit time points (comma-separated)
+
+Equilibrium Preparation
+~~~~~~~~~~~~~~~~~~~~~~~
+
+``HCDWorkflow.run()`` (``hcdworkflow/hcd_workflow.py``) prepares the input
+equilibrium for the actors with ``hcdworkflow/equilibrium_extension.py``: psi
+and B outside the LCFS and the ``profiles_2d`` grid are extended with
+``workflow/extend_equilibrium.py`` (matched scheme), so that ray- and
+beam-tracing actors see a smooth psi and B field from the launchers to the
+plasma. Every entry point goes through ``HCDWorkflow.run()``: the stand-alone
+Legacy driver (``hcd_nogui``, ``hcd_gui``), the Hybrid MUSCLE3 micro model and
+JINTRAC, which calls ``HCDWorkflow.run()`` directly with the JETTO equilibrium,
+so the same rule applies everywhere.
+
+Optional entries of ``workflow_parameters``:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 25 75
+
+   * - Parameter
+     - Values
+   * - ``eq_extension``
+     - ``auto`` (default when neither ``eq_extension`` nor ``extend_equilibrium``
+       is given), ``forced`` or ``disabled``. ``1`` and ``matched`` select
+       ``auto``; ``0`` and ``none`` select ``disabled``. Values are
+       case-insensitive; any other value stops the workflow with an error
+       listing the accepted ones.
+   * - ``extend_equilibrium``
+     - Read when ``eq_extension`` is absent, with the same values.
+   * - ``extend_equilibrium_box``
+     - ``Rmin,Rmax,Zmin,Zmax`` in m, covered by the extended grid; when absent,
+       the default box of ``extend_equilibrium.py`` (ITER EC launchers,
+       ``3.9,10.6,-4.6,4.9``).
+
+``auto`` decides per time slice from the equilibrium data
+(``needs_extension()`` in ``extend_equilibrium.py``). The grid nodes of the
+original ``profiles_2d`` grid with ``dx > 1.02`` are clearly outside the LCFS,
+where ``dx`` is the normalised distance of the matched scheme (distance from the
+magnetic axis divided by the distance of the LCFS at the same poloidal angle).
+The slice is extended when
+
+* more than 50 % of these nodes have psi clamped to the boundary value,
+  ``|psi_N - 1| < 1e-4`` with ``psi_N = (psi - psi_axis) / (psi_boundary - psi_axis)``; or
+* there is no such node (the grid stops at the plasma).
+
+Otherwise, for instance for a free-boundary equilibrium whose psi varies outside
+the LCFS, the slice is left unchanged; a slice without ``profiles_2d`` is also
+left unchanged. ``forced`` extends every slice, e.g. to replace the extension
+made by the equilibrium code itself; ``disabled`` never extends.
+
+``HCDWorkflow.initialize()`` prints the setting used and where it comes from,
+e.g. ``[equilibrium] extension setting: auto (extend_equilibrium = 1)``.
+``HCDWorkflow.run()`` prints exactly one line per time slice, in every mode, e.g.
+``[equilibrium] t=60.4064s extension: applied (auto: clamped fraction 1.000 of
+808 nodes with dx>1.02): ...`` (JETTO), ``[equilibrium] t=199.9376s extension: not
+applied (auto: clamped fraction 0.000 of 5834 nodes with dx>1.02, not needed)``
+(DINA) or ``... extension: not applied (disabled)``; within JINTRAC this stdout
+line is the record of the decision. JINTRAC initialises the workflow from
+``Ext_HCD_WF_config``, so the setting is read from
+``Ext_HCD_WF_config/input_workflow.xml``.
+
+The actors receive an extended copy of the equilibrium; the equilibrium object
+passed to ``HCDWorkflow.run()`` is not modified, and the stand-alone driver
+writes the input equilibrium unchanged to the output entry. The extended copy is
+not a reconstructed equilibrium outside the LCFS; the caveat is appended to its
+``ids_properties.comment``.
+
+``HCDWorkflow.run()`` also accepts the keywords ``eq_extension`` and
+``eq_extension_box``, which take precedence over the workflow parameters.
 
 Global Lists (YAML)
 --------------------
@@ -242,6 +321,36 @@ TORBEAM
        <parameter name="power">1.5e6</parameter>
        <parameter name="mode">X</parameter>
    </parameters>
+
+DD 3 Variants and Regression Variants
+-------------------------------------
+
+The configuration files of a folder (``input_workflow.xml``, the actor code-parameter files
+``input_<actor>.xml`` and the waveform files ``<system>_waveforms.yaml`` given to the Waveform-Cooker)
+hold the content for Data Dictionary 4. A file whose content depends on the DD has a DD 3 variant
+``<name>_dd3.<ext>`` next to it: a copy in which only the DD-dependent entries differ (for example
+``beam[i].mode`` in ``ec_waveforms_dd3.yaml`` where ``ec_waveforms.yaml`` sets
+``beam[i].polarization.o_mode_fraction``). Files valid for both DDs have no variant.
+
+A configuration folder may also hold regression variants ``<name>_reg.<ext>`` (and
+``<name>_reg_dd3.<ext>`` for a DD-dependent file). They carry degraded, faster settings (for example
+fewer time slices or a coarser actor resolution) for the regression tests and are copies of the
+normal files in which only these parameters differ.
+
+The file read for ``<name>.<ext>`` is the first existing file of ``<name>_reg_dd3`` (regression mode,
+DD 3), ``<name>_dd3`` (DD 3), ``<name>_reg`` (regression mode) and ``<name>``. The DD is the target DD
+of the workflow (``IMAS_VERSION``); regression mode is selected by the environment variable
+``HCDWF_TEST_MODE`` set to ``1`` (or ``true``). The selection is made in
+``hcdworkflow/config_files.py`` for every reader of these files (``hcd_nogui``, ``hcd_gui`` runs,
+``hcdslice_nogui``, the actor code parameters, the waveform files and the values that
+``workflow/ids_prep.py`` takes from them), and the workflow prints the file it reads. The GUI
+editors open and save the normal files only. A workflow-specific variable is used so that actors
+running in the workflow process are not switched by their own test variables (``MS_TEST_MODE``).
+
+``ci-sdcc/st03-regression.sh`` sets ``HCDWF_TEST_MODE=1`` unless it is already set; the
+references in ``tests/reference/<CASE>`` are produced in this mode, so a run with
+``HCDWF_TEST_MODE=0`` compares the normal settings with them and is expected to differ for the
+cases that have variants.
 
 Validation
 ----------
