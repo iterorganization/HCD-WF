@@ -1,4 +1,4 @@
-# HCD Workflow
+# HCD Workflow is nice
 
 [![Development Status](https://img.shields.io/badge/status-development-yellow.svg)](https://pypi.org/project/HCDWorkflow/)
 [![Python Version](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/downloads/)
